@@ -1,59 +1,104 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# KinoBot
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+KinoBot is a Laravel-based project that integrates with Telegram to manage and post movies from a channel. The project includes a small admin API for adding/updating movies, a `Movie` model and seeder that imports Telegram file IDs, and a `TelegramService` wrapper for Telegram Bot API interactions.
 
-## About Laravel
+**Main features:**
+- Handle Telegram webhooks and bot messages
+- Admin API for CRUD operations on movies (`App\\Http\\Controllers\\AdminController`)
+- `TelegramService` for sending messages, photos, videos, buttons, files, and managing webhooks
+- Database seeders to import existing Telegram media (`database/seeders/MovieSeeder1.php`)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Requirements
+- PHP 8.2+
+- Composer
+- Node.js & npm (for Vite / frontend)
+- MySQL / SQLite / other supported database
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Quick setup
+1. Clone the repo and install PHP dependencies:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```bash
+composer install
+```
 
-## Learning Laravel
+2. Copy `.env` and generate app key:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+```bash
+cp .env.example .env
+php artisan key:generate
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+3. Configure `.env` (important values):
 
-## Laravel Sponsors
+- `TELEGRAM_BOT_TOKEN` — bot token from BotFather
+- `TELEGRAM_CHANNEL_USERNAME` — default channel username (e.g. `@KinolarOlami`)
+- Database settings (`DB_CONNECTION`, `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+4. Run migrations and seeders:
 
-### Premium Partners
+```bash
+php artisan migrate
+php artisan db:seed --class=MovieSeeder1
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+5. Install frontend dependencies and build (optional for production):
 
-## Contributing
+```bash
+npm install
+npm run build       # or `npm run dev` for development
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+6. Serve the app locally:
 
-## Code of Conduct
+```bash
+php artisan serve
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Telegram integration
+- Webhook endpoint: `POST /telegram/webhook` (defined in `routes/web.php`)
+- API webhook (alternative): `POST /api/webhook` (defined in `routes/api.php`)
+- You can set webhook via the route `GET /telegram/set-webhook` or programmatically using `TelegramService::setWebhook($url)`.
 
-## Security Vulnerabilities
+`TelegramService` supports methods like `sendMessage`, `sendPhoto`, `sendVideo`, `forwardMessage`, `sendMessageWithButtons`, `answerCallbackQuery`, `sendDocument`, `getMe`, `getChat`, `editMessageText`, `deleteMessage`, `setWebhook`, and `getWebhookInfo`.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Make sure `TELEGRAM_BOT_TOKEN` is set in `.env` before calling webhook or sending messages.
+
+## API (Admin)
+Key admin endpoints are implemented in `App\\Http\\Controllers\\AdminController`:
+
+- `POST /api/admin/movie/add` — add a movie
+- `PUT /api/admin/movie/{id}` — update a movie
+- `DELETE /api/admin/movie/{id}` — delete a movie
+- `GET /api/admin/movies` — list movies (paginated)
+- `GET /api/admin/movie/{id}` — get one movie
+- `GET /api/admin/stats` — basic stats (total movies, views, most viewed)
+
+Note: Protect admin routes with authentication/middleware before using in production.
+
+## Database & Seeders
+- The `Movie` model (`app/Models/Movie.php`) stores `code`, `channel_id`, `message_id`, `file_id`, and `views`.
+- `database/seeders/MovieSeeder1.php` inserts a list of Telegram `file_id`s and `message_id`s — useful to bootstrap existing channel content.
+
+## Running tests
+Use the included composer scripts:
+
+```bash
+composer test
+```
+
+This runs `php artisan test` (see `composer.json` scripts).
+
+## Development scripts
+- `composer run setup` — installs PHP and JS deps, generates key, runs migrations and builds assets (defined in `composer.json`)
+- `npm run dev` — starts Vite in dev mode
+
+## Notes & recommendations
+- Do not commit real tokens or secrets. Keep `.env` out of version control.
+- Configure queue/worker (if used) and long-running processes for production.
+- Add authentication + role checks for admin API endpoints.
 
 ## License
+This project uses the MIT license (inherited from Laravel skeleton).
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+Generated README: see [README.md](README.md) for this file.
