@@ -12,7 +12,7 @@ class TelegramController extends Controller
     public function handle(Request $request)
     {
         $update = $request->all();
-        Log::info('Telegram update:', $update);
+        // Log::info('Telegram update:', $update);
 
         if (!isset($update['message'])) {
             return response()->json(['ok' => true]);
@@ -21,48 +21,109 @@ class TelegramController extends Controller
         $chatId = $update['message']['chat']['id'];
         $token  = env('TELEGRAM_BOT_TOKEN');
 
-        // 👤 USER TEXT (kino kodi)
-        if (isset($update['message']['text'])) {
-            $code = trim($update['message']['text']);
+        if (!isset($update['message']['text'])) {
+            return response()->json(['ok' => true]);
+        }
 
-            // faqat raqam bo‘lsa qidiramiz
-            if (!ctype_digit($code)) {
-                $this->sendMessage($token, $chatId, "❌ Iltimos, kino kodini raqam bilan yuboring.");
-                return response()->json(['ok' => true]);
-            }
+        $text = trim($update['message']['text']);
 
-            // 🎬 DB dan qidiramiz
-            $movie = Movie::where('code', $code)->first();
+        // /start 123 format
+        if (str_starts_with($text, '/start')) {
+            $parts = explode(' ', $text);
+            $text = $parts[1] ?? '';
+        }
 
-            if (!$movie) {
-                $this->sendMessage($token, $chatId, "😕 Kino topilmadi.");
-                return response()->json(['ok' => true]);
-            }
+        // Faqat raqam
+        if (!ctype_digit($text)) {
+            $this->sendMessage(
+                $token,
+                $chatId,
+                "❌ Iltimos, kino kodini raqam bilan yuboring."
+            );
+            return response()->json(['ok' => true]);
+        }
 
-            // 👁 ko‘rishlar soni +1
-            $movie->increment('views');
+        $code = trim($text);
 
-            // 📤 Kanal postidan botga yuboramiz
-            if ($movie->message_id) {
-                Http::post("https://api.telegram.org/bot{$token}/copyMessage", [
+        // Log::info("Searching movie code:", ['code' => $code]);
+
+        $movie = Movie::where('code', $code)->first();
+
+        if (!$movie) {
+            $this->sendMessage(
+                $token,
+                $chatId,
+                "😕 Kino topilmadi."
+            );
+            return response()->json(['ok' => true]);
+        }
+
+        // views +1
+        $movie->increment('views');
+        $movie->refresh();
+
+        $channelUsername = '@kin0meda';
+
+        $caption =
+            "🔍 Kino kodi: {$movie->code}\n" .
+            "🎬 Kanal: {$channelUsername}\n" .
+            "🤖 Bot: @" . env('TELEGRAM_BOT_USERNAME') . "\n" .
+            "👁 Ko'rishlar: {$movie->views} ta";
+
+        $keyboard = [
+            'inline_keyboard' => [
+                [
+                    [
+                        'text' => '📤 Ulashish',
+                        'switch_inline_query' => $movie->code
+                    ]
+                ]
+            ]
+        ];
+
+        // copyMessage orqali
+        if ($movie->message_id) {
+
+            // Log::info("Sending via copyMessage");
+
+            $response = Http::post(
+                "https://api.telegram.org/bot{$token}/copyMessage",
+                [
                     'chat_id' => $chatId,
-                    'from_chat_id' => env('TELEGRAM_CHANNEL_USERNAME'),
+                    'from_chat_id' => $movie->channel_id,
                     'message_id' => $movie->message_id,
-                ]);
-            }
-            // Agar message_id bo‘lmasa → file_id bilan yuboramiz
-            elseif ($movie->file_id) {
-                Http::post("https://api.telegram.org/bot{$token}/sendVideo", [
+                    'caption' => $caption,
+                    'reply_markup' => json_encode($keyboard),
+                ]
+            );
+
+            // Log::info('Telegram response:', $response->json());
+        }
+
+        // file_id orqali
+        elseif ($movie->file_id) {
+
+            // Log::info("Sending via sendVideo");
+
+            $response = Http::post(
+                "https://api.telegram.org/bot{$token}/sendVideo",
+                [
                     'chat_id' => $chatId,
                     'video' => $movie->file_id,
-                    'caption' => "🎬 Kino kodi: {$movie->code}\n👁 Ko'rishlar soni: {$movie->views}",
-                    'parse_mode' => 'HTML',
-                    'disable_web_page_preview' => true,
-                    'reply_to_message_id' => $update['message']['message_id'] ?? null,
-                ]);
-            } else {
-                $this->sendMessage($token, $chatId, "⚠️ Kino mavjud, lekin fayl topilmadi.");
-            }
+                    'caption' => $caption,
+                    'reply_markup' => json_encode($keyboard),
+                ]
+            );
+
+            // Log::info('Telegram response:', $response->json());
+        }
+
+        else {
+            $this->sendMessage(
+                $token,
+                $chatId,
+                "⚠️ Kino mavjud, lekin video topilmadi."
+            );
         }
 
         return response()->json(['ok' => true]);

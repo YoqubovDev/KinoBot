@@ -103,10 +103,7 @@ class MovieSeeder1 extends Seeder
                 'file_id' => 'BAACAgIAAxkBAANmaYJGt0w6hsANFDc3b9zy9Z6vNvYAAjlVAAIPaBBI_U5TjOCi0go4BA',
                 'message_id' => 81,
             ],
-            [
-                'file_id' => 'BAACAgIAAxkBAANjaYJGtwGZUmVcbazJO_MMCc60XD4AAiVMAAKU2aFIbBSrh3t6MdY4BA',
-                'message_id' => 82,
-            ],
+            
             [
                 'file_id' => 'BAACAgIAAxkBAANoaYJGt3ubDSGqPRHrRT4RJdm6MaAAAo1QAAJMn9hIbD2tKGIdwig4BA',
                 'message_id' => 83,

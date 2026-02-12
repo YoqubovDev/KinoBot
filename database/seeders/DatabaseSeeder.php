@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             MovieSeeder1::class,
             MovieSeeder2::class,
-            MovieSeederFromLog::class,
+            MovieSeeder3::class,
         ]);
     }
 }
