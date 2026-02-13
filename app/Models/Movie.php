@@ -8,6 +8,7 @@ class Movie extends Model
 {
     protected $fillable = [
         'code',
+        'name',
         'channel_id',
         'message_id',
         'file_id',
