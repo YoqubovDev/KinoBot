@@ -12,7 +12,7 @@ class TelegramController extends Controller
     public function handle(Request $request)
     {
         $update = $request->all();
-        // Log::info('Telegram update:', $update);
+        Log::info('Telegram update:', $update);
 
         if (!isset($update['message'])) {
             return response()->json(['ok' => true]);
@@ -45,12 +45,12 @@ class TelegramController extends Controller
 
         $code = trim($text);
 
-        // Log::info("Searching movie code:", ['code' => $code]);
+        Log::info("Searching movie code:", ['code' => $code]);
 
         $movie = Movie::where('code', $code)->first();
 
         if (!$movie) {
-            $this->sendMessage(
+            $this->sendMessage(                                             
                 $token,
                 $chatId,
                 "😕 Kino topilmadi."
@@ -84,7 +84,7 @@ class TelegramController extends Controller
         // copyMessage orqali
         if ($movie->message_id) {
 
-            // Log::info("Sending via copyMessage");
+            Log::info("Sending via copyMessage");
 
             $response = Http::post(
                 "https://api.telegram.org/bot{$token}/copyMessage",
@@ -97,13 +97,13 @@ class TelegramController extends Controller
                 ]
             );
 
-            // Log::info('Telegram response:', $response->json());
+            Log::info('Telegram response:', $response->json());
         }
 
         // file_id orqali
         elseif ($movie->file_id) {
 
-            // Log::info("Sending via sendVideo");
+            Log::info("Sending via sendVideo");
 
             $response = Http::post(
                 "https://api.telegram.org/bot{$token}/sendVideo",
@@ -115,7 +115,7 @@ class TelegramController extends Controller
                 ]
             );
 
-            // Log::info('Telegram response:', $response->json());
+            Log::info('Telegram response:', $response->json());
         }
 
         else {
