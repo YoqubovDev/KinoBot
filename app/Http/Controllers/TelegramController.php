@@ -12,7 +12,7 @@ class TelegramController extends Controller
     public function handle(Request $request)
     {
         $update = $request->all();
-        Log::info('Telegram update:', $update);
+        // Log::info('Telegram update:', $update);
 
         if (!isset($update['message'])) {
             return response()->json(['ok' => true]);
@@ -97,13 +97,13 @@ class TelegramController extends Controller
                 ]
             );
 
-            Log::info('Telegram response:', $response->json());
+            // Log::info('Telegram response:', $response->json());
         }
 
         // file_id orqali
         elseif ($movie->file_id) {
 
-            Log::info("Sending via sendVideo");
+            // Log::info("Sending via sendVideo");
 
             $response = Http::post(
                 "https://api.telegram.org/bot{$token}/sendVideo",
@@ -115,7 +115,7 @@ class TelegramController extends Controller
                 ]
             );
 
-            Log::info('Telegram response:', $response->json());
+            // Log::info('Telegram response:', $response->json());
         }
 
         else {
