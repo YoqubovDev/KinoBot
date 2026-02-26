@@ -11,8 +11,45 @@ class SerialSeeder extends Seeder
 {
     public function run()
     {
+        $this->seedGassolS1();
         $this->seedGassol();
         $this->seedJumong();
+    }
+
+    private function seedGassolS1()
+    {
+        $serialName = "G'assol 1-fasl";
+        $channelId = "-1003605893088";
+        $serial = Serial::firstOrCreate(['name' => $serialName]);
+
+        $episodes = [
+            ['ep' => 1,  'code' => '28', 'msg_id' => 64, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAANAaYxd7I5AAuQ5iGkuHsV6ptZcENsAAix0AALWv3FIoi3wmmKlvGg6BA'],
+            ['ep' => 2,  'code' => '29', 'msg_id' => 65, 'file_id' => 'BAACAgIAAxkBAAIDfGmPYKQLgUds37eqhKyleDlC5BrYAAItdAAC1r9xSHZ_leh5sICzOgQ'],
+            ['ep' => 3,  'code' => '30', 'msg_id' => 66, 'file_id' => 'BAACAgIAAxkBAAIDfWmPYKRNgMJscXmrBG1Uqxc0aHW7AAKcdAAC1r9xSC2qgLRuJGCZOgQ'],
+            ['ep' => 4,  'code' => '31', 'msg_id' => 67, 'file_id' => 'BAACAgIAAxkBAAIDfmmPYKQv650BkT_NXq9kAAHQou3phQACnXQAAta_cUiIGQABCyvXaFU6BA'],
+            ['ep' => 5,  'code' => '32', 'msg_id' => 68, 'file_id' => 'BAACAgIAAxkBAAIDf2mPYKR5id4TAwr9aE10_die9ge4AAKbdAAC1r9xSOwfaz6MJE3oOgQ'],
+            ['ep' => 6,  'code' => '33', 'msg_id' => 69, 'file_id' => 'BAACAgIAAxkBAAIDgGmPYKQ9WtiBJzEszYtiHiGZLWMqAAKedAAC1r9xSK75IkE2Ox2UOgQ'],
+            ['ep' => 7,  'code' => '34', 'msg_id' => 70, 'file_id' => 'BAACAgIAAxkBAAIDgWmPYKSr7LcyIVJOGoIlnVuXqc9VAAKgdAAC1r9xSJkb1yckrK2-OgQ'],
+            ['ep' => 8,  'code' => '35', 'msg_id' => 71, 'file_id' => 'BAACAgIAAxkBAAIDgmmPYKS6Lxn6NacvQvdLnqN9Ux4sAAKfdAAC1r9xSDLJqvpjc1yTOgQ'],
+            ['ep' => 9,  'code' => '36', 'msg_id' => 72, 'file_id' => 'BAACAgIAAxkBAAIDg2mPYKTsuedXJFc-r5otTW7cIz7QAAKhdAAC1r9xSEO8Mlo7eKwmOgQ'],
+            ['ep' => 10, 'code' => '37', 'msg_id' => 73, 'file_id' => 'BAACAgIAAxkBAAIDhGmPYKQKgps5wQaI9GABkcoMl3f2AAKidAAC1r9xSOEt_fqJ2gqUOgQ'],
+        ];
+
+        foreach ($episodes as $data) {
+            SerialEpisode::updateOrCreate(
+                ['serial_id' => $serial->id, 'episode_number' => $data['ep']],
+                ['file_id' => $data['file_id']]
+            );
+             Movie::updateOrCreate(
+                ['code' => $data['code']],
+                [
+                    'name' => "{$serialName} {$data['ep']}-qism",
+                    'channel_id' => $channelId,
+                    'message_id' => $data['msg_id'],
+                    'file_id' => $data['file_id'],
+                ]
+            );
+        }
     }
 
     private function seedGassol()
@@ -22,16 +59,16 @@ class SerialSeeder extends Seeder
         $serial = Serial::firstOrCreate(['name' => $serialName]);
 
         $episodes = [
-            ['ep' => 1, 'code' => '146', 'msg_id' => 110, 'file_id' => 'BAACAgIAAxkBAAIBEmmG182QUTjyuSDdTnwAAcvBmj2wQwACwAoAAm00aEvW4fyyK2lGjjoE'],
-            ['ep' => 2, 'code' => '147', 'msg_id' => 111, 'file_id' => 'BAACAgIAAxkBAAIBE2mG183YX5me9w_bjh8NyNRr2MckAAJ9CQACQbRoS-PWhILTfrxtOgQ'],
-            ['ep' => 3, 'code' => '148', 'msg_id' => 112, 'file_id' => 'BAACAgIAAxkBAAIBFGmG183C809HokEcDeYlu610fINjAAJ8DgAC3VVhS_JOiiFEyBb4OgQ'],
-            ['ep' => 4, 'code' => '149', 'msg_id' => 113, 'file_id' => 'BAACAgIAAxkBAAIBFWmG1807qWKZH1O40lA-9X8WicrFAAKfBgACbdxpS0n07okmb3d6OgQ'],
-            ['ep' => 5, 'code' => '150', 'msg_id' => 114, 'file_id' => 'BAACAgIAAxkBAAIBFmmG1801ciBKUc1ju4H_-MhU-yz4AAI5CgACuGpoS1J2Hn43t1M3OgQ'],
-            ['ep' => 6, 'code' => '151', 'msg_id' => 115, 'file_id' => 'BAACAgIAAxkBAAIBF2mG180akAFrIYA4zkcWkDaoalq_AAJUCAACwUVpS64ZMIPsy4G_OgQ'],
-            ['ep' => 7, 'code' => '152', 'msg_id' => 116, 'file_id' => 'BAACAgIAAxkBAAIBGGmG182SocqZHBI3t3MlhqMBfX6vAAI0CgACwUVpSwQwwHJp8TMjOgQ'],
-            ['ep' => 8, 'code' => '153', 'msg_id' => 117, 'file_id' => 'BAACAgIAAxkBAAIBGWmG182uVC6fffoYKi2OFIY6H4ypAAKWDwACLiZpS7l2YHJryw4rOgQ'],
-            ['ep' => 9, 'code' => '154', 'msg_id' => 118, 'file_id' => 'BAACAgIAAxkBAAIBGmmG182eo5uYA5ZQ4J_tsrHIUN2-AAIDBwACLiZxS0U84PaXBUHnOgQ'],
-            ['ep' => 10, 'code' => '155', 'msg_id' => 119, 'file_id' => 'BAACAgIAAxkBAAIBG2mG181I5bR9WRGWqgU9vq0_omWtAAKADQACwUVpS37Z73AGerZeOgQ'],
+            ['ep' => 1, 'code' => '146', 'msg_id' => 309, 'file_id' => 'BAACAgIAAxkBAAIBEmmG182QUTjyuSDdTnwAAcvBmj2wQwACwAoAAm00aEvW4fyyK2lGjjoE'],
+            ['ep' => 2, 'code' => '147', 'msg_id' => 311, 'file_id' => 'BAACAgIAAxkBAAIBE2mG183YX5me9w_bjh8NyNRr2MckAAJ9CQACQbRoS-PWhILTfrxtOgQ'],
+            ['ep' => 3, 'code' => '148', 'msg_id' => 312, 'file_id' => 'BAACAgIAAxkBAAIBFGmG183C809HokEcDeYlu610fINjAAJ8DgAC3VVhS_JOiiFEyBb4OgQ'],
+            ['ep' => 4, 'code' => '149', 'msg_id' => 313, 'file_id' => 'BAACAgIAAxkBAAIBFWmG1807qWKZH1O40lA-9X8WicrFAAKfBgACbdxpS0n07okmb3d6OgQ'],
+            ['ep' => 5, 'code' => '150', 'msg_id' => 314, 'file_id' => 'BAACAgIAAxkBAAIBFmmG1801ciBKUc1ju4H_-MhU-yz4AAI5CgACuGpoS1J2Hn43t1M3OgQ'],
+            ['ep' => 6, 'code' => '151', 'msg_id' => 315, 'file_id' => 'BAACAgIAAxkBAAIBF2mG180akAFrIYA4zkcWkDaoalq_AAJUCAACwUVpS64ZMIPsy4G_OgQ'],
+            ['ep' => 7, 'code' => '152', 'msg_id' => 316, 'file_id' => 'BAACAgIAAxkBAAIBGGmG182SocqZHBI3t3MlhqMBfX6vAAI0CgACwUVpSwQwwHJp8TMjOgQ'],
+            ['ep' => 8, 'code' => '153', 'msg_id' => 317, 'file_id' => 'BAACAgIAAxkBAAIBGWmG182uVC6fffoYKi2OFIY6H4ypAAKWDwACLiZpS7l2YHJryw4rOgQ'],
+            ['ep' => 9, 'code' => '154', 'msg_id' => 318, 'file_id' => 'BAACAgIAAxkBAAIBGmmG182eo5uYA5ZQ4J_tsrHIUN2-AAIDBwACLiZxS0U84PaXBUHnOgQ'],
+            ['ep' => 10, 'code' => '155', 'msg_id' => 319, 'file_id' => 'BAACAgIAAxkBAAIBG2mG181I5bR9WRGWqgU9vq0_omWtAAKADQACwUVpS37Z73AGerZeOgQ'],
         ];
 
         foreach ($episodes as $data) {
