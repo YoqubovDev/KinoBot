@@ -12,7 +12,7 @@ class TelegramController extends Controller
     public function handle(Request $request)
     {
         $update = $request->all();
-        Log::info('Telegram update:', $update);
+        // Log::info('Telegram update:', $update);
 
         if (isset($update['callback_query'])) {
             return $this->handleCallbackQuery($update['callback_query']);
@@ -55,7 +55,7 @@ class TelegramController extends Controller
 
         $code = trim($text);
 
-        Log::info("Searching movie code:", ['code' => $code]);
+        // Log::info("Searching movie code:", ['code' => $code]);
 
         $movie = Movie::where('code', $code)->first();
 
@@ -95,7 +95,7 @@ class TelegramController extends Controller
 
         // copyMessage orqali harakat qilamiz
         if ($movie->message_id && $movie->channel_id) {
-            Log::info("Attempting via copyMessage");
+            // Log::info("Attempting via copyMessage");
             $response = Http::post(
                 "https://api.telegram.org/bot{$token}/copyMessage",
                 [
@@ -109,15 +109,15 @@ class TelegramController extends Controller
 
             if ($response->successful()) {
                 $sent = true;
-                Log::info('copyMessage successful');
+                // Log::info('copyMessage successful');
             } else {
-                Log::error('copyMessage failed, falling back to sendVideo', ['response' => $response->json()]);
+                // Log::error('copyMessage failed, falling back to sendVideo', ['response' => $response->json()]);
             }
         }
 
         // file_id orqali (fallback yoki message_id yo'q bo'lsa)
         if (!$sent && $movie->file_id) {
-            Log::info("Attempting via sendVideo");
+            // Log::info("Attempting via sendVideo");
             $response = Http::post(
                 "https://api.telegram.org/bot{$token}/sendVideo",
                 [
@@ -130,9 +130,9 @@ class TelegramController extends Controller
 
             if ($response->successful()) {
                 $sent = true;
-                Log::info('sendVideo successful');
+                // Log::info('sendVideo successful');
             } else {
-                Log::error('sendVideo failed', ['response' => $response->json()]);
+                // Log::error('sendVideo failed', ['response' => $response->json()]);
             }
         }
 

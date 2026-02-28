@@ -16,8 +16,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
         $this->call([
             MovieSeeder1::class,
             MovieSeeder2::class,
@@ -25,7 +23,8 @@ class DatabaseSeeder extends Seeder
             MovieSeeder4::class,
             MovieSeeder5::class,
             MovieSeeder6::class,
-
+            MovieSeeder7::class,
+            MovieSeeder8::class,
         ]);
     }
 }
