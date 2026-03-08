@@ -15,6 +15,8 @@ class SerialSeeder extends Seeder
         $this->seedGassol();
         $this->seedJumong();
         $this->seedUmarIbnHattob();
+        $this->seedDengizHukumdori();
+        $this->seedTaxtlarOyini();
     }
 
     private function seedGassolS1()
@@ -230,6 +232,118 @@ class SerialSeeder extends Seeder
             ['ep' => 28, 'code' => '327', 'msg_id' => 359, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBZmmpDfZYKifAqkEoBom3_nr2SF1SAALdBwACM7DhSHAmAX4-YtWyOgQ'],
             ['ep' => 29, 'code' => '328', 'msg_id' => 360, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBZGmpDfYLoRYseTvkrA4s3y4F1kJZAAJgBgAC5zjhSK6-SYkpSnLGOgQ'],
             ['ep' => 30, 'code' => '329', 'msg_id' => 361, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBZWmpDfZ0I6b8FoUpL6k3a2i1XjTjAALgBwACM7DhSOtTCZX5AAGk-DoE'],
+        ];
+
+        foreach ($episodes as $data) {
+            SerialEpisode::updateOrCreate(
+                ['serial_id' => $serial->id, 'episode_number' => $data['ep']],
+                ['file_id' => $data['file_id']]
+            );
+            Movie::updateOrCreate(
+                ['code' => $data['code']],
+                [
+                    'name' => "{$serialName} {$data['ep']}-qism",
+                    'channel_id' => $channelId,
+                    'message_id' => $data['msg_id'],
+                    'file_id' => $data['file_id'],
+                ]
+            );
+        }
+    }
+
+    private function seedDengizHukumdori()
+    {
+        $serialName = "Dengiz hukumdori";
+        $channelId = "-1003605893088";
+        $serial = Serial::firstOrCreate(['name' => $serialName]);
+
+        $episodes = [
+            ['ep' => 1,  'code' => '342', 'msg_id' => 374, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBdmmsfPcJYodbFo6y1UDnTLtONdSSAAJOBQAC2wABmEq_VsaPLacdBjoE'],
+            ['ep' => 2,  'code' => '342-2', 'msg_id' => 374, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBdmmsfPcJYodbFo6y1UDnTLtONdSSAAJOBQAC2wABmEq_VsaPLacdBjoE'], 
+            ['ep' => 3,  'code' => '343', 'msg_id' => 375, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBd2msfPcnUl5DMum-JQTvgqPSUk4tAAJPBQAC2wABmEoDMBIHL7TaXzoE'],
+            ['ep' => 4,  'code' => '344', 'msg_id' => 376, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBeGmsfPdin35h2hFo51yqB7mVRrwYAAJQBQAC2wABmErvYWW549H0tToE'],
+            ['ep' => 5,  'code' => '345', 'msg_id' => 377, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBeWmsfPcmp4U6yNqZi1f7OqnTLMjlAAJRBQAC2wABmEqDzOt-2z1X5zoE'],
+            ['ep' => 6,  'code' => '346', 'msg_id' => 378, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBemmsfPdBxzPOwucEQkBCpVj9QiQcAAJVBQAC2wABmEotfU931fQR9zoE'],
+            ['ep' => 7,  'code' => '347', 'msg_id' => 379, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBe2msfPdS5j1IF6sdv33dl53duGg-AAJYBQAC2wABmEpPGOl8MUNZjToE'],
+            ['ep' => 8,  'code' => '348', 'msg_id' => 380, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBfGmsfPfXDvjoQbqE3BrJxwUkKrLiAAJaBQAC2wABmEoxvUv5YBHySDoE'],
+            ['ep' => 9,  'code' => '349', 'msg_id' => 381, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBfWmsfPcMaDhBUua0mL-jBC61qnjWAAJiBQAC2wABmEpwV_adh1VvSDoE'],
+            ['ep' => 10, 'code' => '350', 'msg_id' => 382, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBfmmsfPf1aYqYmunKqVo2QO8HaleTAAJlBQAC2wABmEpr-n78IMxZqToE'],
+            ['ep' => 11, 'code' => '351', 'msg_id' => 383, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBf2msfPfcCxb2piKggUSPSwI3zqw5AAJ1BQAC2wABmErwhPe-2j9dfToE'],
+            ['ep' => 12, 'code' => '352', 'msg_id' => 384, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBgGmsfPe62K6MkZmJV5Uj_tBixQTuAAJ6BQAC2wABmErrflJSnT8AARw6BA'],
+            ['ep' => 13, 'code' => '353', 'msg_id' => 385, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBgWmsfPcJLH9l18sCL3XLMV7pUZK5AAKEBQAC2wABmErhLal9G4njCjoE'],
+            ['ep' => 14, 'code' => '354', 'msg_id' => 386, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBgmmsfPc-RaklVCst8UPNQUizUzovAAKKBQAC2wABmEqzUKFfdeqw7zoE'],
+            ['ep' => 15, 'code' => '355', 'msg_id' => 387, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBg2msfPfN0vDqp80O_SzhDw5IDvQzAAKVBQAC2wABmEo3scTxI_y-jToE'],
+            ['ep' => 16, 'code' => '356', 'msg_id' => 388, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBhGmsfPfjkHODRAEDsKhSOEM1H6-sAAKbBQAC2wABmEq3on6EdSR-cToE'],
+            ['ep' => 17, 'code' => '357', 'msg_id' => 389, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBhWmsfPevMsyBTY-iZO-sAZ0AAXa_hgACowUAAtsAAZhKGMfRjG_9MH46BA'],
+            ['ep' => 18, 'code' => '358', 'msg_id' => 390, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBhmmsfPc8ORsxHt0QnnNBdowBXVQ_AAKvBQAC2wABmEqQg0FndRDUeToE'],
+            ['ep' => 20, 'code' => '360', 'msg_id' => 391, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBh2msfPc3YDionWd0jkuM8ZE8JRiAAALPBQAC2wABmErwc_7Lm9D-yToE'],
+            ['ep' => 21, 'code' => '361', 'msg_id' => 392, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBiGmsfPdc4jd43-UFeItdEgdkboHpAALjBQAC2wABmEpJ5tDkCRiGLDoE'],
+            ['ep' => 22, 'code' => '362', 'msg_id' => 393, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBiWmsfPfaMXNligNSX6-QOi8ymz7GAAL2BQAC2wABmErj0gr_dTznUjoE'],
+            ['ep' => 23, 'code' => '363', 'msg_id' => 394, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBimmsfPeIEy8jqTahbdwITW7r3QlWAAL9BQAC2wABmEoJKnF-kElMGToE'],
+            ['ep' => 24, 'code' => '364', 'msg_id' => 395, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBi2msfPdeGnTOF2tY3jSCRwLiSLuyAAMGAALbAAGYSjKWqkpedZzsOgQ'],
+            ['ep' => 25, 'code' => '365', 'msg_id' => 396, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBjGmsfPf-eY0KfP12cG8gReFPtW0WAAIFBgAC2wABmEoTQO63TwMvMzoE'],
+            ['ep' => 26, 'code' => '366', 'msg_id' => 397, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBjWmsfPfUoCSaxdabiLqe8Fb6ptWeAAIGBgAC2wABmEpT6PQ5RbRXEToE'],
+            ['ep' => 27, 'code' => '367', 'msg_id' => 398, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBjmmsfPe-uROAuRdHt6vI6MkuJ3yTAAIIBgAC2wABmErIOyEZAAGQIhg6BA'],
+            ['ep' => 28, 'code' => '368', 'msg_id' => 399, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBj2msfPdQcTJRVh430mvr3nrE03xxAAILBgAC2wABmEpMjhyavhh1hToE'],
+            ['ep' => 29, 'code' => '369', 'msg_id' => 400, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBkGmsfPeJtk6aDUqSh46Jpxv9xr2fAAIOBgAC2wABmEpsX7roC9Ht1joE'],
+            ['ep' => 30, 'code' => '370', 'msg_id' => 401, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBkWmsfPdEs7nHtWYyFhJSBPxf8ixaAAIPBgAC2wABmErOw5Kq3LuCwzoE'],
+            ['ep' => 31, 'code' => '371', 'msg_id' => 402, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBkmmsfPcp6XpiBtqqX_rfcsSTiryjAAKICAACg0KoSs8PEKNJBJwROgQ'],
+            ['ep' => 32, 'code' => '372', 'msg_id' => 403, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBk2msfPeX3svOdA6gKzcfMVr498EtAAKeCAACg0KoSkWBtOID1o0HOgQ'],
+            ['ep' => 33, 'code' => '373', 'msg_id' => 404, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBlGmsfPeqWAgQ9dQL4O8LEmJaZSV8AAKgCAACg0KoSvawKeRZJ2LuOgQ'],
+            ['ep' => 34, 'code' => '374', 'msg_id' => 405, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBlWmsfPcqlXs5101_jGs4aNIUq9t7AALfCAACg0KoSv0PzPsD2fAROgQ'],
+            ['ep' => 35, 'code' => '375', 'msg_id' => 406, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBlmmsfPfgr7twanWBD-Y7fwj08UVQAALjCAACg0KoSgxbPp-iK9WjOgQ'],
+            ['ep' => 36, 'code' => '376', 'msg_id' => 407, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBl2msfPdf4t2MvqHRikPHD3weDgsWAAL2CAACg0KoSl6Qz3HptjGmOgQ'],
+            ['ep' => 37, 'code' => '377', 'msg_id' => 408, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBmGmsfPe7hIqkaoQgrlJQer3AGQoAA_gIAAKDQqhKxxYrARNXAAFOOgQ'],
+            ['ep' => 38, 'code' => '378', 'msg_id' => 409, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBmWmsfPckkvYfoKoL_F5NNKMn8zkhAAL5CAACg0KoSrxB9WyZNUSyOgQ'],
+            ['ep' => 39, 'code' => '379', 'msg_id' => 410, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBmmmsfPdesfqUHgE16Dipefn7FcoAA_oIAAKDQqhKEfQCouZQov46BA'],
+            ['ep' => 40, 'code' => '380', 'msg_id' => 411, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBm2msfPc9jpwopvzhoQdJx-Xmq7g2AAL7CAACg0KoSv1mLpUDk5fKOgQ'],
+            ['ep' => 41, 'code' => '381', 'msg_id' => 412, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBnGmsfPfSTCbPEpRTiVH2VsAvbz9YAAL8CAACg0KoShPpjZecQ5b8OgQ'],
+            ['ep' => 42, 'code' => '382', 'msg_id' => 413, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBnWmsfPeCy7-lWP5U9dSqdDCM_KC0AAL9CAACg0KoStX5O-_6EffCOgQ'],
+            ['ep' => 43, 'code' => '383', 'msg_id' => 414, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBnmmsfPfsmYpV3uUnHq2ICsS65C5qAAIFCQACg0KoSrdrtPp_GRwxOgQ'],
+            ['ep' => 44, 'code' => '384', 'msg_id' => 415, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBn2msfPcNMYTWLD_LVLr_T0e0xpF9AAIPCQACg0KoSr_jBexWfeVmOgQ'],
+            ['ep' => 45, 'code' => '385', 'msg_id' => 416, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBoGmsfPdn2zVWNztVeLuFLqn8kd1pAAIUCQACg0KoSgK62s8PZXJvOgQ'],
+            ['ep' => 46, 'code' => '386', 'msg_id' => 417, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBoWmsfPeW8Lfrg4CSMwWrsYXc_0nPAAIeCQACg0KoStIufW0bb8tBOgQ'],
+            ['ep' => 47, 'code' => '387', 'msg_id' => 418, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBommsfPcXf-X2lnVM22Jat8_XqctSAAIiCQACg0KoSi1ZuUIBZdwvOgQ'],
+            ['ep' => 48, 'code' => '388', 'msg_id' => 419, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBo2msfPf-KLIvIOKtkj90MPONLcULAAIlCQACg0KoSp50e2YsdB3eOgQ'],
+            ['ep' => 49, 'code' => '389', 'msg_id' => 420, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBpGmsfPcU7OnqeCT8FcNfg9OsZrsdAAImCQACg0KoSklKclb1DPOLOgQ'],
+            ['ep' => 50, 'code' => '390', 'msg_id' => 421, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBpWmsfPcI45Z_SL3wH17cJzGu2ZLFAAIpCQACg0KoSmjyeO-fE3R7OgQ'],
+            ['ep' => 51, 'code' => '391', 'msg_id' => 422, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBpmmsfPd_1y1Vlo7DMPaS-TD-_N_cAAItCQACg0KoSoOtcQ5BK-ujOgQ'],
+        ];
+
+        foreach ($episodes as $data) {
+            SerialEpisode::updateOrCreate(
+                ['serial_id' => $serial->id, 'episode_number' => $data['ep']],
+                ['file_id' => $data['file_id']]
+            );
+            Movie::updateOrCreate(
+                ['code' => $data['code']],
+                [
+                    'name' => "{$serialName} {$data['ep']}-qism",
+                    'channel_id' => $channelId,
+                    'message_id' => $data['msg_id'],
+                    'file_id' => $data['file_id'],
+                ]
+            );
+        }
+    }
+
+    private function seedTaxtlarOyini()
+    {
+        $serialName = "Taxtlar o'yini";
+        $channelId = "-1003605893088";
+        $serial = Serial::firstOrCreate(['name' => $serialName]);
+
+        $episodes = [
+            ['ep' => 1,  'code' => '281', 'msg_id' => 427, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBq2ms0pEcIhs6gsz06zyfvivrj-v_AAKHpwACVMhoSaA2-WCLl1yGOgQ'],
+            ['ep' => 2,  'code' => '282', 'msg_id' => 428, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBrGms0pF4l6eFSCUBQE7A5F7lQyQWAAKIpwACVMhoSThuIX70sniIOgQ'],
+            ['ep' => 3,  'code' => '283', 'msg_id' => 429, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBrWms0pFmTODaV1eg5fnTDmrBT-31AAKKpwACVMhoSZusNNdrnRN-OgQ'],
+            ['ep' => 4,  'code' => '284', 'msg_id' => 430, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBrmms0pEEfCIX84vk5pqRuX8j2UTwAAKNpwACVMhoSTxgyE_JX7T6OgQ'],
+            ['ep' => 5,  'code' => '285', 'msg_id' => 431, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBr2ms0pHnOdmOcVGbo6_5xVgUZu-YAAKOpwACVMhoScQ7uRNakdoTOgQ'],
+            ['ep' => 6,  'code' => '286', 'msg_id' => 432, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBsGms0pGtjHwz96neLDVqp9_LIjYUAAKRpwACVMhoSZ1ArYN-4BLPOgQ'],
+            ['ep' => 7,  'code' => '287', 'msg_id' => 433, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBsWms0pHRO3Q8zT9PPg_4FMwv89ZDAAKTpwACVMhoSbWoz0Hjso3xOgQ'],
+            ['ep' => 8,  'code' => '288', 'msg_id' => 434, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBsmms0pFQJaJU_jByD_2BmNq8LvHTAAKUpwACVMhoSVY0b5hwVD-8OgQ'],
+            ['ep' => 9,  'code' => '289', 'msg_id' => 435, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBs2ms0pEi9KD_t4DvYtQVCq21kRjoAAKVpwACVMhoSZ59HRu0flONOgQ'],
+            ['ep' => 10, 'code' => '290', 'msg_id' => 436, 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBtGms0pFpBAG39XUHTbx5JX42FGw1AAKXpwACVMhoSQPkFgS7suZSOgQ'],
         ];
 
         foreach ($episodes as $data) {
