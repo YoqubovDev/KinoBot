@@ -37,9 +37,20 @@ class TelegramController extends Controller
             }
         }
 
-        // Serial + button handler
+        // Eski 'Serial +' yoki yangi tillar bo'yicha handler
+        $languages = [
+            "🇺🇿 O'zbek tili" => 'uz',
+            "🇷🇺 Rus tili" => 'ru',
+            "🇺🇸 Ingliz tili" => 'en'
+        ];
+
         if ($text === 'Serial +') {
-            $this->sendSerialsList($token, $chatId);
+            $this->sendWelcomeMessage($token, $chatId);
+            return response()->json(['ok' => true]);
+        }
+
+        if (array_key_exists($text, $languages)) {
+            $this->sendSerialsListByLangMessage($token, $chatId, $languages[$text]);
             return response()->json(['ok' => true]);
         }
 
@@ -160,7 +171,9 @@ class TelegramController extends Controller
         $keyboard = [
             'keyboard' => [
                 [
-                    ['text' => 'Serial +']
+                    ['text' => "🇺🇿 O'zbek tili"],
+                    ['text' => "🇷🇺 Rus tili"],
+                    ['text' => "🇺🇸 Ingliz tili"]
                 ]
             ],
             'resize_keyboard' => true,
@@ -173,11 +186,37 @@ class TelegramController extends Controller
         ]);
     }
 
-    private function sendSerialsList($token, $chatId)
+    private function handleCallbackQuery($callbackQuery)
     {
-        $serials = \App\Models\Serial::all();
+        $data = $callbackQuery['data'];
+        $chatId = $callbackQuery['message']['chat']['id'];
+        $messageId = $callbackQuery['message']['message_id'];
+        $token = env('TELEGRAM_BOT_TOKEN');
+
+        Http::post("https://api.telegram.org/bot{$token}/answerCallbackQuery", [
+            'callback_query_id' => $callbackQuery['id']
+        ]);
+
+        if (str_starts_with($data, 'lang_')) {
+            $langCode = str_replace('lang_', '', $data);
+            $this->editToSerialsByLanguage($token, $chatId, $messageId, $langCode);
+        } elseif (str_starts_with($data, 'serial_')) {
+            $serialId = str_replace('serial_', '', $data);
+            $this->sendEpisodesList($token, $chatId, $messageId, $serialId);
+        } elseif (str_starts_with($data, 'episode_')) {
+            $episodeId = str_replace('episode_', '', $data);
+            $this->sendEpisodeVideo($token, $chatId, $episodeId);
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    private function sendSerialsListByLangMessage($token, $chatId, $langCode)
+    {
+        $serials = \App\Models\Serial::where('language', $langCode)->get();
+
         if ($serials->isEmpty()) {
-            $this->sendMessage($token, $chatId, "Hozircha seriallar yo'q.");
+            $this->sendMessage($token, $chatId, "Bu tilda hozircha seriallar yo'q.");
             return;
         }
 
@@ -196,28 +235,33 @@ class TelegramController extends Controller
         ]);
     }
 
-    private function handleCallbackQuery($callbackQuery)
+    private function editToSerialsByLanguage($token, $chatId, $messageId, $langCode)
     {
-        $data = $callbackQuery['data'];
-        $chatId = $callbackQuery['message']['chat']['id'];
-        $messageId = $callbackQuery['message']['message_id'];
-        $token = env('TELEGRAM_BOT_TOKEN');
+        $serials = \App\Models\Serial::where('language', $langCode)->get();
 
-        Http::post("https://api.telegram.org/bot{$token}/answerCallbackQuery", [
-            'callback_query_id' => $callbackQuery['id']
-        ]);
-
-        if (str_starts_with($data, 'serial_')) {
-            $serialId = str_replace('serial_', '', $data);
-            $this->sendEpisodesList($token, $chatId, $messageId, $serialId);
-        } elseif (str_starts_with($data, 'episode_')) {
-            $episodeId = str_replace('episode_', '', $data);
-            $this->sendEpisodeVideo($token, $chatId, $episodeId);
-        } elseif ($data === 'back_to_serials') {
-            $this->editToSerialsList($token, $chatId, $messageId);
+        if ($serials->isEmpty()) {
+            Http::post("https://api.telegram.org/bot{$token}/editMessageText", [
+                'chat_id' => $chatId,
+                'message_id' => $messageId,
+                'text' => "Bu tilda hozircha seriallar yo'q."
+            ]);
+            return;
         }
 
-        return response()->json(['ok' => true]);
+        $buttons = [];
+        foreach ($serials as $serial) {
+            $buttons[][] = [
+                'text' => $serial->name,
+                'callback_data' => 'serial_' . $serial->id
+            ];
+        }
+        
+        Http::post("https://api.telegram.org/bot{$token}/editMessageText", [
+            'chat_id' => $chatId,
+            'message_id' => $messageId,
+            'text' => "Seriallardan birini tanlang:",
+            'reply_markup' => json_encode(['inline_keyboard' => $buttons]),
+        ]);
     }
 
     private function sendEpisodesList($token, $chatId, $messageId, $serialId)
@@ -229,7 +273,12 @@ class TelegramController extends Controller
             Http::post("https://api.telegram.org/bot{$token}/editMessageText", [
                 'chat_id' => $chatId,
                 'message_id' => $messageId,
-                'text' => "Bu serialning qismlari hozircha yo'q."
+                'text' => "Bu serialning qismlari hozircha yo'q.",
+                'reply_markup' => json_encode([
+                    'inline_keyboard' => [
+                        [['text' => '🔙 Orqaga', 'callback_data' => 'lang_' . ($serial->language ?? 'uz')]]
+                    ]
+                ])
             ]);
             return;
         }
@@ -251,10 +300,11 @@ class TelegramController extends Controller
             $buttons[] = $row;
         }
 
+        $lang = $serial->language ?: 'uz';
         $buttons[] = [
             [
                 'text' => '🔙 Orqaga',
-                'callback_data' => 'back_to_serials'
+                'callback_data' => 'lang_' . $lang
             ]
         ];
 
@@ -264,34 +314,6 @@ class TelegramController extends Controller
             'text' => "🎬 *{$serial->name}*\n\nQismlardan birini tanlang:",
             'parse_mode' => 'Markdown',
             'reply_markup' => json_encode(['inline_keyboard' => $buttons])
-        ]);
-    }
-
-    private function editToSerialsList($token, $chatId, $messageId)
-    {
-        $serials = \App\Models\Serial::all();
-        if ($serials->isEmpty()) {
-            Http::post("https://api.telegram.org/bot{$token}/editMessageText", [
-                'chat_id' => $chatId,
-                'message_id' => $messageId,
-                'text' => "Hozircha seriallar yo'q."
-            ]);
-            return;
-        }
-
-        $buttons = [];
-        foreach ($serials as $serial) {
-            $buttons[][] = [
-                'text' => $serial->name,
-                'callback_data' => 'serial_' . $serial->id
-            ];
-        }
-
-        Http::post("https://api.telegram.org/bot{$token}/editMessageText", [
-            'chat_id' => $chatId,
-            'message_id' => $messageId,
-            'text' => "Seriallardan birini tanlang:",
-            'reply_markup' => json_encode(['inline_keyboard' => $buttons]),
         ]);
     }
 
