@@ -54,32 +54,47 @@ class TelegramController extends Controller
             return response()->json(['ok' => true]);
         }
 
-        // Faqat raqam
-        if (!ctype_digit($text)) {
-            $this->sendMessage(
-                $token,
-                $chatId,
-                "❌ Iltimos, kino kodini raqam bilan yuboring."
-            );
-            return response()->json(['ok' => true]);
+        $searchTerm = trim($text);
+
+        if (ctype_digit($searchTerm)) {
+            $movie = Movie::where('code', $searchTerm)->first();
+            if (!$movie) {
+                $this->sendMessage($token, $chatId, "😕 Kino topilmadi.");
+                return response()->json(['ok' => true]);
+            }
+            $this->sendMovieVideo($token, $chatId, $movie);
+        } else {
+            $movies = Movie::where('name', 'like', '%' . $searchTerm . '%')->limit(10)->get();
+
+            if ($movies->isEmpty()) {
+                $this->sendMessage($token, $chatId, "😕 Qidiruvingiz bo'yicha kino topilmadi.");
+                return response()->json(['ok' => true]);
+            }
+
+            if ($movies->count() === 1) {
+                $this->sendMovieVideo($token, $chatId, $movies->first());
+            } else {
+                $buttons = [];
+                foreach ($movies as $movie) {
+                    $buttons[][] = [
+                        'text' => $movie->name,
+                        'callback_data' => 'movie_' . $movie->code
+                    ];
+                }
+
+                Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+                    'chat_id' => $chatId,
+                    'text' => "🔍 Quyidagi kinolardan birini tanlang:",
+                    'reply_markup' => json_encode(['inline_keyboard' => $buttons]),
+                ]);
+            }
         }
 
-        $code = trim($text);
+        return response()->json(['ok' => true]);
+    }
 
-        // Log::info("Searching movie code:", ['code' => $code]);
-
-        $movie = Movie::where('code', $code)->first();
-
-        if (!$movie) {
-            $this->sendMessage(                                             
-                $token,
-                $chatId,
-                "😕 Kino topilmadi."
-            );
-            return response()->json(['ok' => true]);
-        }
-
-        // views +1
+    private function sendMovieVideo($token, $chatId, $movie)
+    {
         $movie->increment('views');
         $movie->refresh();
 
@@ -104,9 +119,7 @@ class TelegramController extends Controller
 
         $sent = false;
 
-        // copyMessage orqali harakat qilamiz
         if ($movie->message_id && $movie->channel_id) {
-            // Log::info("Attempting via copyMessage");
             $response = Http::post(
                 "https://api.telegram.org/bot{$token}/copyMessage",
                 [
@@ -117,18 +130,10 @@ class TelegramController extends Controller
                     'reply_markup' => json_encode($keyboard),
                 ]
             );
-
-            if ($response->successful()) {
-                $sent = true;
-                // Log::info('copyMessage successful');
-            } else {
-                // Log::error('copyMessage failed, falling back to sendVideo', ['response' => $response->json()]);
-            }
+            if ($response->successful()) $sent = true;
         }
 
-        // file_id orqali (fallback yoki message_id yo'q bo'lsa)
         if (!$sent && $movie->file_id) {
-            // Log::info("Attempting via sendVideo");
             $response = Http::post(
                 "https://api.telegram.org/bot{$token}/sendVideo",
                 [
@@ -138,24 +143,12 @@ class TelegramController extends Controller
                     'reply_markup' => json_encode($keyboard),
                 ]
             );
-
-            if ($response->successful()) {
-                $sent = true;
-                // Log::info('sendVideo successful');
-            } else {
-                // Log::error('sendVideo failed', ['response' => $response->json()]);
-            }
+            if ($response->successful()) $sent = true;
         }
 
         if (!$sent) {
-            $this->sendMessage(
-                $token,
-                $chatId,
-                "⚠️ Video yuborishda xatolik yuz berdi."
-            );
+            $this->sendMessage($token, $chatId, "⚠️ Video yuborishda xatolik yuz berdi.");
         }
-
-        return response()->json(['ok' => true]);
     }
 
     private function sendMessage($token, $chatId, $text)
@@ -206,6 +199,12 @@ class TelegramController extends Controller
         } elseif (str_starts_with($data, 'episode_')) {
             $episodeId = str_replace('episode_', '', $data);
             $this->sendEpisodeVideo($token, $chatId, $episodeId);
+        } elseif (str_starts_with($data, 'movie_')) {
+            $movieCode = str_replace('movie_', '', $data);
+            $movie = Movie::where('code', $movieCode)->first();
+            if ($movie) {
+                $this->sendMovieVideo($token, $chatId, $movie);
+            }
         }
 
         return response()->json(['ok' => true]);

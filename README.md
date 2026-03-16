@@ -101,4 +101,22 @@ This runs `php artisan test` (see `composer.json` scripts).
 This project uses the MIT license (inherited from Laravel skeleton).
 
 ---
-Generated README: see [README.md](README.md) for this file.
+
+## 🚀 Yangi qo'shilgan qulayliklar (Telegram Bot)
+
+**1. "Serial & Tillarni tanlash" (Kategoriyalar)**
+* Botga kirganda "🇺🇿 O'zbek tili", "🇷🇺 Rus tili", "🇺🇸 Ingliz tili" tugmalari chiqadi.
+* Foydalanuvchi filmlarni tiilarga bo'lingan holda osongina ko'rishi mumkin.
+* "🇷🇺 Rus tili" yoki "🇺🇸 Ingliz tili" ni tanlagandan so'ng mavjud seriallar ro'yxati chiqadi, kerakli qismni tanlab ko'rish imkoniyati mavjud.
+
+**2. "Kino nomi bo'yicha aqlli qidiruv"**
+* Foydalanuvchi endi faqat kod (raqam) emas, balki **kino yoki serial nomini yozib** ham izlashi mumkin!
+* Agar qidirilgan nom faqat 1 ta kinoga to'g'ri kelsa, bot darhol shu kinoni yuboradi.
+* Agar shu nom bilan turli qismlar yoki bir nechta variant topilsa, maksimal 10 ta natijani tugma ko'rinishida foydalanuvchiga yuboradi va u o'ziga keraklisini oson tanlab oladi.
+
+**3. "Avtomatik ko'rishlar soni"**
+* Bazaga (MovieSeeders) kinolar saqlanganda avtomatik ravishda tasodifiy (200 dan 300 gacha) ko'rishlar soni bilan qo'shiladi. Bu kanalning faolligini sun'iy oshirib ko'rsatishga yordam beradi.
+* Kino har safar qidirib topilganda ko'rishlar soni haqiqiy +1 ga oshib boradi.
+
+**4. "Xavfsiz yuborish tizimi (Fallback System)"**
+* Telegram kanalidan kinoni foydalanuvchiga forward/copy qilishda kanal IDsi yopiq yoxud ruxsat bo'lmasa, uni to'g'ridan-to'g'ri `file_id` dan foydalanib yuborish imkoniyati (SendVideo) mavjud. Bu kino hecham yo'qolmasligiga xizmat qiladi.
