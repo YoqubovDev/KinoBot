@@ -12,7 +12,7 @@ class TelegramController extends Controller
     public function handle(Request $request)
     {
         $update = $request->all();
-        // Log::info('Telegram update:', $update);
+        Log::info('Telegram update:', $update);
 
         if (isset($update['callback_query'])) {
             return $this->handleCallbackQuery($update['callback_query']);
@@ -172,9 +172,10 @@ class TelegramController extends Controller
             'resize_keyboard' => true,
         ];
 
-        Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+        Http::post("https://api.telegram.org/bot{$token}/sendVideo", [
             'chat_id' => $chatId,
-            'text' => "Salom! Kino kodini yuboring yoki quyidagi menyudan foydalaning.",
+            'video' => 'BAACAgIAAyEFAATW7Y_gAAIB3Wm5BHuBV8buvAUl8x2RngN8-PghAAIvkwAC-NrJSTjAbjyHj0R2OgQ',
+            'caption' => "Salom! Qollama videoni ko'ring. Kino kodini va Kinoni nomini yuboring yoki quyidagi menyudan foydalaning.",
             'reply_markup' => json_encode($keyboard),
         ]);
     }
