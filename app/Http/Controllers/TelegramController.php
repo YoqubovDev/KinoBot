@@ -299,7 +299,7 @@ class TelegramController extends Controller
             $buttons[] = $row;
         }
 
-        $lang = $serial->language ?: 'uz';
+        $lang = $serial->language ?? 'uz';
         $buttons[] = [
             [
                 'text' => '🔙 Orqaga',
