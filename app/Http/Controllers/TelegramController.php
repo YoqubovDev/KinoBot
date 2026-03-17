@@ -175,7 +175,7 @@ class TelegramController extends Controller
         Http::post("https://api.telegram.org/bot{$token}/sendVideo", [
             'chat_id' => $chatId,
             'video' => 'BAACAgIAAyEFAATW7Y_gAAIB3Wm5BHuBV8buvAUl8x2RngN8-PghAAIvkwAC-NrJSTjAbjyHj0R2OgQ',
-            'caption' => "Salom! Qollama videoni ko'ring. Kino kodini va Kinoni nomini yuboring yoki quyidagi menyudan foydalaning.",
+            'caption' => "Salom! Qo'llanma videoni ko'ring. Kino kodini va Kinoni nomini yuboring yoki quyidagi menyudan foydalaning.",
             'reply_markup' => json_encode($keyboard),
         ]);
     }
