@@ -30,8 +30,11 @@ class DatabaseSeeder extends Seeder
             MovieSeeder11::class,
             MovieSeeder12::class,
             MovieSeeder13::class,
+            MovieSeeder14::class,
+            MovieRusSeeder15::class,
             SerialSeeder::class,
             MerlinSeeder::class,
+            WednesdayS2Seeder::class,
         ]);
     }
 }
