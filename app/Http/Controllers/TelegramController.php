@@ -12,11 +12,8 @@ class TelegramController extends Controller
     public function handle(Request $request)
     {
         $update = $request->all();
-        
-        // Botdan foydalangan userni saqlab borish (Statistika uchun)
-        $this->trackUser($update);
 
-        // Log::info('Telegram update:', $update);
+        Log::info('Telegram update:', $update);
 
         if (isset($update['callback_query'])) {
             return $this->handleCallbackQuery($update['callback_query']);
