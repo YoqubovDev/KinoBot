@@ -27,6 +27,12 @@ class TelegramController extends Controller
         $token  = env('TELEGRAM_BOT_TOKEN');
         $text = trim($update['message']['text']);
 
+        // Check subscription
+        if (!$this->checkSubscription($token, $chatId)) {
+            $this->sendSubscriptionMessage($token, $chatId);
+            return response()->json(['ok' => true]);
+        }
+
         // /start 123 format or /start
         if (str_starts_with($text, '/start')) {
             $parts = explode(' ', $text);
@@ -187,6 +193,23 @@ class TelegramController extends Controller
         $chatId = $callbackQuery['message']['chat']['id'];
         $messageId = $callbackQuery['message']['message_id'];
         $token = env('TELEGRAM_BOT_TOKEN');
+
+        if ($data === 'check_sub') {
+            if ($this->checkSubscription($token, $chatId)) {
+                $this->sendWelcomeMessage($token, $chatId);
+                Http::post("https://api.telegram.org/bot{$token}/deleteMessage", [
+                    'chat_id' => $chatId,
+                    'message_id' => $messageId
+                ]);
+            } else {
+                Http::post("https://api.telegram.org/bot{$token}/answerCallbackQuery", [
+                    'callback_query_id' => $callbackQuery['id'],
+                    'text' => "❌ Siz hali kanalga a'zo emassiz!",
+                    'show_alert' => true
+                ]);
+            }
+            return response()->json(['ok' => true]);
+        }
 
         Http::post("https://api.telegram.org/bot{$token}/answerCallbackQuery", [
             'callback_query_id' => $callbackQuery['id']
@@ -386,5 +409,47 @@ class TelegramController extends Controller
                 'reply_markup' => json_encode($keyboard),
             ]);
         }
+    }
+
+    private function checkSubscription($token, $chatId)
+    {
+        $channels = [
+
+            ['id' => '-1003774629679', 'link' => 'https://t.me/kin0meda'],
+        ];
+
+        foreach ($channels as $channel) {
+            $response = Http::post("https://api.telegram.org/bot{$token}/getChatMember", [
+                'chat_id' => $channel['id'],
+                'user_id' => $chatId,
+            ]);
+
+            if ($response->successful()) {
+                $status = $response->json('result.status');
+                if ($status === 'left' || $status === 'kicked') {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private function sendSubscriptionMessage($token, $chatId)
+    {
+        $buttons = [
+            [
+                ['text' => "Kanalga a'zo bo'lish", 'url' => 'https://t.me/kin0meda']
+            ],
+            [
+                ['text' => "✅ Tasdiqlash", 'callback_data' => 'check_sub']
+            ]
+        ];
+
+        Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+            'chat_id' => $chatId,
+            'text' => "Botdan foydalanish uchun kanalimizga a'zo bo'ling:",
+            'reply_markup' => json_encode(['inline_keyboard' => $buttons]),
+        ]);
     }
 }
