@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\Movie;
 use Illuminate\Support\Carbon;
 
 class MovieSeeder7 extends Seeder
@@ -14,7 +14,7 @@ class MovieSeeder7 extends Seeder
 
             [
                 'code' => '160',
-                'channel_id' => env('TELEGRAM_CHANNEL_USERNAME', '@kinomed1aa'),
+                'channel_id' => config('telegram.channel_username', '@kinomed1aa'),
                 'message_id' => 323,
                 'file_id' => 'BAACAgQAAyEFAATW7Y_gAAIBQ2mZDuceUdvWzb_RIV_YLctO8sjsAAKyCQAC_9jAUfGmj90lQuIxOgQ',
                 'views' => 0,
@@ -24,7 +24,7 @@ class MovieSeeder7 extends Seeder
 
             [
                 'code' => '159',
-                'channel_id' => env('TELEGRAM_CHANNEL_USERNAME', '@kinomed1aa'),
+                'channel_id' => config('telegram.channel_username', '@kinomed1aa'),
                 'message_id' => 324,
                 'file_id' => 'BAACAgIAAyEFAATW7Y_gAAIBRGmZDuda5SDi2smydRm3waE9BG1PAALYQgACkmdQS_i6AAF1RKWc9joE',
                 'views' => 0,
@@ -34,7 +34,12 @@ class MovieSeeder7 extends Seeder
 
         ];
 
-        DB::table('movies')->insert($movies);
+        foreach ($movies as $movie) {
+            Movie::firstOrCreate(
+                ['code' => $movie['code']],
+                collect($movie)->except(['code', 'created_at', 'updated_at'])->toArray()
+            );
+        }
 
         $this->command->info(count($movies) . ' ta kino seed qilindi!');
         $this->command->info(str_repeat('-', 50));

@@ -2,18 +2,41 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use App\Models\Movie;
+use App\Models\Serial;
+use App\Models\SerialEpisode;
+use App\Services\TelegramApi;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class TelegramController extends Controller
 {
+    private TelegramApi $telegram;
+
+    public function __construct(TelegramApi $telegram)
+    {
+        $this->telegram = $telegram;
+    }
+
+    public function setWebhook(Request $request)
+    {
+        $url = rtrim(config('app.url'), '/') . '/api/webhook';
+
+        return response()->json(
+            $this->telegram->call('setWebhook', ['url' => $url])->json()
+        );
+    }
+
+    public function removeWebhook(Request $request)
+    {
+        return response()->json(
+            $this->telegram->call('deleteWebhook')->json()
+        );
+    }
+
     public function handle(Request $request)
     {
         $update = $request->all();
-
-        Log::info('Telegram update:', $update);
 
         if (isset($update['callback_query'])) {
             return $this->handleCallbackQuery($update['callback_query']);
@@ -24,12 +47,10 @@ class TelegramController extends Controller
         }
 
         $chatId = $update['message']['chat']['id'];
-        $token  = env('TELEGRAM_BOT_TOKEN');
         $text = trim($update['message']['text']);
 
-        // Check subscription
-        if (!$this->checkSubscription($token, $chatId)) {
-            $this->sendSubscriptionMessage($token, $chatId);
+        if (!$this->checkSubscription($chatId)) {
+            $this->sendSubscriptionMessage($chatId);
             return response()->json(['ok' => true]);
         }
 
@@ -39,7 +60,7 @@ class TelegramController extends Controller
             if (isset($parts[1]) && trim($parts[1]) !== '') {
                 $text = $parts[1];
             } else {
-                $this->sendWelcomeMessage($token, $chatId);
+                $this->sendWelcomeMessage($chatId);
                 return response()->json(['ok' => true]);
             }
         }
@@ -52,12 +73,12 @@ class TelegramController extends Controller
         ];
 
         if ($text === 'Serial +') {
-            $this->sendWelcomeMessage($token, $chatId);
+            $this->sendWelcomeMessage($chatId);
             return response()->json(['ok' => true]);
         }
 
         if (array_key_exists($text, $languages)) {
-            $this->sendSerialsListByLangMessage($token, $chatId, $languages[$text]);
+            $this->sendSerialsListByLangMessage($chatId, $languages[$text]);
             return response()->json(['ok' => true]);
         }
 
@@ -66,20 +87,20 @@ class TelegramController extends Controller
         if (ctype_digit($searchTerm)) {
             $movie = Movie::where('code', $searchTerm)->first();
             if (!$movie) {
-                $this->sendMessage($token, $chatId, "😕 Kino topilmadi.");
+                $this->sendMessage($chatId, "😕 Kino topilmadi.");
                 return response()->json(['ok' => true]);
             }
-            $this->sendMovieVideo($token, $chatId, $movie);
+            $this->sendMovieVideo($chatId, $movie);
         } else {
             $movies = Movie::where('name', 'like', '%' . $searchTerm . '%')->limit(10)->get();
 
             if ($movies->isEmpty()) {
-                $this->sendMessage($token, $chatId, "😕 Qidiruvingiz bo'yicha kino topilmadi.");
+                $this->sendMessage($chatId, "😕 Qidiruvingiz bo'yicha kino topilmadi.");
                 return response()->json(['ok' => true]);
             }
 
             if ($movies->count() === 1) {
-                $this->sendMovieVideo($token, $chatId, $movies->first());
+                $this->sendMovieVideo($chatId, $movies->first());
             } else {
                 $buttons = [];
                 foreach ($movies as $movie) {
@@ -89,7 +110,7 @@ class TelegramController extends Controller
                     ];
                 }
 
-                Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+                $this->telegram->call('sendMessage', [
                     'chat_id' => $chatId,
                     'text' => "🔍 Quyidagi kinolardan birini tanlang:",
                     'reply_markup' => json_encode(['inline_keyboard' => $buttons]),
@@ -100,7 +121,7 @@ class TelegramController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    private function sendMovieVideo($token, $chatId, $movie)
+    private function sendMovieVideo($chatId, $movie)
     {
         $movie->increment('views');
         $movie->refresh();
@@ -110,7 +131,7 @@ class TelegramController extends Controller
         $caption =
             "🔍 Kino kodi: {$movie->code}\n" .
             "🎬 Kanal: {$channelUsername}\n" .
-            "🤖 Bot: @" . env('TELEGRAM_BOT_USERNAME') . "\n" .
+            "🤖 Bot: @" . config('telegram.bot_username') . "\n" .
             "👁 Ko'rishlar: {$movie->views} ta";
 
         $keyboard = [
@@ -127,46 +148,40 @@ class TelegramController extends Controller
         $sent = false;
 
         if ($movie->message_id && $movie->channel_id) {
-            $response = Http::post(
-                "https://api.telegram.org/bot{$token}/copyMessage",
-                [
-                    'chat_id' => $chatId,
-                    'from_chat_id' => $movie->channel_id,
-                    'message_id' => $movie->message_id,
-                    'caption' => $caption,
-                    'reply_markup' => json_encode($keyboard),
-                ]
-            );
+            $response = $this->telegram->call('copyMessage', [
+                'chat_id' => $chatId,
+                'from_chat_id' => $movie->channel_id,
+                'message_id' => $movie->message_id,
+                'caption' => $caption,
+                'reply_markup' => json_encode($keyboard),
+            ]);
             if ($response->successful()) $sent = true;
         }
 
         if (!$sent && $movie->file_id) {
-            $response = Http::post(
-                "https://api.telegram.org/bot{$token}/sendVideo",
-                [
-                    'chat_id' => $chatId,
-                    'video' => $movie->file_id,
-                    'caption' => $caption,
-                    'reply_markup' => json_encode($keyboard),
-                ]
-            );
+            $response = $this->telegram->call('sendVideo', [
+                'chat_id' => $chatId,
+                'video' => $movie->file_id,
+                'caption' => $caption,
+                'reply_markup' => json_encode($keyboard),
+            ]);
             if ($response->successful()) $sent = true;
         }
 
         if (!$sent) {
-            $this->sendMessage($token, $chatId, "⚠️ Video yuborishda xatolik yuz berdi.");
+            $this->sendMessage($chatId, "⚠️ Video yuborishda xatolik yuz berdi.");
         }
     }
 
-    private function sendMessage($token, $chatId, $text)
+    private function sendMessage($chatId, $text)
     {
-        Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+        $this->telegram->call('sendMessage', [
             'chat_id' => $chatId,
             'text' => $text,
         ]);
     }
 
-    private function sendWelcomeMessage($token, $chatId)
+    private function sendWelcomeMessage($chatId)
     {
         $keyboard = [
             'keyboard' => [
@@ -179,7 +194,7 @@ class TelegramController extends Controller
             'resize_keyboard' => true,
         ];
 
-        Http::post("https://api.telegram.org/bot{$token}/sendVideo", [
+        $this->telegram->call('sendVideo', [
             'chat_id' => $chatId,
             'video' => 'BAACAgIAAyEFAATW7Y_gAAIB3Wm5BHuBV8buvAUl8x2RngN8-PghAAIvkwAC-NrJSTjAbjyHj0R2OgQ',
             'caption' => "Salom! Qo'llanma videoni ko'ring. Kino kodini va Kinoni nomini yuboring yoki quyidagi menyudan foydalaning.",
@@ -192,17 +207,16 @@ class TelegramController extends Controller
         $data = $callbackQuery['data'];
         $chatId = $callbackQuery['message']['chat']['id'];
         $messageId = $callbackQuery['message']['message_id'];
-        $token = env('TELEGRAM_BOT_TOKEN');
 
         if ($data === 'check_sub') {
-            if ($this->checkSubscription($token, $chatId)) {
-                $this->sendWelcomeMessage($token, $chatId);
-                Http::post("https://api.telegram.org/bot{$token}/deleteMessage", [
+            if ($this->checkSubscription($chatId)) {
+                $this->sendWelcomeMessage($chatId);
+                $this->telegram->call('deleteMessage', [
                     'chat_id' => $chatId,
                     'message_id' => $messageId
                 ]);
             } else {
-                Http::post("https://api.telegram.org/bot{$token}/answerCallbackQuery", [
+                $this->telegram->call('answerCallbackQuery', [
                     'callback_query_id' => $callbackQuery['id'],
                     'text' => "❌ Siz hali kanalga a'zo emassiz!",
                     'show_alert' => true
@@ -211,36 +225,47 @@ class TelegramController extends Controller
             return response()->json(['ok' => true]);
         }
 
-        Http::post("https://api.telegram.org/bot{$token}/answerCallbackQuery", [
+        $this->telegram->call('answerCallbackQuery', [
             'callback_query_id' => $callbackQuery['id']
         ]);
 
         if (str_starts_with($data, 'lang_')) {
             $langCode = str_replace('lang_', '', $data);
-            $this->editToSerialsByLanguage($token, $chatId, $messageId, $langCode);
+            $this->editToSerialsByLanguage($chatId, $messageId, $langCode);
         } elseif (str_starts_with($data, 'serial_')) {
             $serialId = str_replace('serial_', '', $data);
-            $this->sendEpisodesList($token, $chatId, $messageId, $serialId);
+            $this->sendEpisodesList($chatId, $messageId, $serialId);
         } elseif (str_starts_with($data, 'episode_')) {
             $episodeId = str_replace('episode_', '', $data);
-            $this->sendEpisodeVideo($token, $chatId, $episodeId);
+            $this->sendEpisodeVideo($chatId, $episodeId);
         } elseif (str_starts_with($data, 'movie_')) {
             $movieCode = str_replace('movie_', '', $data);
             $movie = Movie::where('code', $movieCode)->first();
             if ($movie) {
-                $this->sendMovieVideo($token, $chatId, $movie);
+                $this->sendMovieVideo($chatId, $movie);
             }
         }
 
         return response()->json(['ok' => true]);
     }
 
-    private function sendSerialsListByLangMessage($token, $chatId, $langCode)
+    /**
+     * Til bo'yicha seriallar kam o'zgaradi - qisqa muddatga keshlanadi
+     * (har xabarda DB so'rovi qilinmasligi uchun).
+     */
+    private function serialsByLanguage(string $langCode)
     {
-        $serials = \App\Models\Serial::where('language', $langCode)->get();
+        return Cache::remember("serials.{$langCode}", now()->addMinutes(10), function () use ($langCode) {
+            return Serial::where('language', $langCode)->get();
+        });
+    }
+
+    private function sendSerialsListByLangMessage($chatId, $langCode)
+    {
+        $serials = $this->serialsByLanguage($langCode);
 
         if ($serials->isEmpty()) {
-            $this->sendMessage($token, $chatId, "Bu tilda hozircha seriallar yo'q.");
+            $this->sendMessage($chatId, "Bu tilda hozircha seriallar yo'q.");
             return;
         }
 
@@ -252,19 +277,19 @@ class TelegramController extends Controller
             ];
         }
 
-        Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+        $this->telegram->call('sendMessage', [
             'chat_id' => $chatId,
             'text' => "Seriallardan birini tanlang:",
             'reply_markup' => json_encode(['inline_keyboard' => $buttons]),
         ]);
     }
 
-    private function editToSerialsByLanguage($token, $chatId, $messageId, $langCode)
+    private function editToSerialsByLanguage($chatId, $messageId, $langCode)
     {
-        $serials = \App\Models\Serial::where('language', $langCode)->get();
+        $serials = $this->serialsByLanguage($langCode);
 
         if ($serials->isEmpty()) {
-            Http::post("https://api.telegram.org/bot{$token}/editMessageText", [
+            $this->telegram->call('editMessageText', [
                 'chat_id' => $chatId,
                 'message_id' => $messageId,
                 'text' => "Bu tilda hozircha seriallar yo'q."
@@ -279,8 +304,8 @@ class TelegramController extends Controller
                 'callback_data' => 'serial_' . $serial->id
             ];
         }
-        
-        Http::post("https://api.telegram.org/bot{$token}/editMessageText", [
+
+        $this->telegram->call('editMessageText', [
             'chat_id' => $chatId,
             'message_id' => $messageId,
             'text' => "Seriallardan birini tanlang:",
@@ -288,13 +313,13 @@ class TelegramController extends Controller
         ]);
     }
 
-    private function sendEpisodesList($token, $chatId, $messageId, $serialId)
+    private function sendEpisodesList($chatId, $messageId, $serialId)
     {
-        $serial = \App\Models\Serial::find($serialId);
-        $episodes = \App\Models\SerialEpisode::where('serial_id', $serialId)->orderBy('episode_number')->get();
+        $serial = Serial::find($serialId);
+        $episodes = SerialEpisode::where('serial_id', $serialId)->orderBy('episode_number')->get();
 
         if (!$serial || $episodes->isEmpty()) {
-            Http::post("https://api.telegram.org/bot{$token}/editMessageText", [
+            $this->telegram->call('editMessageText', [
                 'chat_id' => $chatId,
                 'message_id' => $messageId,
                 'text' => "Bu serialning qismlari hozircha yo'q.",
@@ -314,7 +339,7 @@ class TelegramController extends Controller
                 'text' => $episode->episode_number . '-qism',
                 'callback_data' => 'episode_' . $episode->id,
             ];
-            
+
             if (count($row) == 3) {
                 $buttons[] = $row;
                 $row = [];
@@ -332,7 +357,7 @@ class TelegramController extends Controller
             ]
         ];
 
-        Http::post("https://api.telegram.org/bot{$token}/editMessageText", [
+        $this->telegram->call('editMessageText', [
             'chat_id' => $chatId,
             'message_id' => $messageId,
             'text' => "🎬 *{$serial->name}*\n\nQismlardan birini tanlang:",
@@ -341,18 +366,18 @@ class TelegramController extends Controller
         ]);
     }
 
-    private function sendEpisodeVideo($token, $chatId, $episodeId)
+    private function sendEpisodeVideo($chatId, $episodeId)
     {
-        $episode = \App\Models\SerialEpisode::with('serial')->find($episodeId);
+        $episode = SerialEpisode::with('serial')->find($episodeId);
         if (!$episode) {
-            $this->sendMessage($token, $chatId, "😕 Qism topilmadi.");
+            $this->sendMessage($chatId, "😕 Qism topilmadi.");
             return;
         }
 
         // Epizodga bog'langan Movie ma'lumotlarini topamiz
         $movieName = "{$episode->serial->name} {$episode->episode_number}-qism";
         $movie = Movie::where('name', $movieName)->first();
-        
+
         if (!$movie) {
             $movie = Movie::where('file_id', $episode->file_id)->first();
         }
@@ -373,7 +398,7 @@ class TelegramController extends Controller
                    "🔍 <b>Kino kodi:</b> {$code}\n" .
                    "🎬 <b>Kanal:</b> {$channelUsername}\n" .
                    "👁 <b>Ko'rishlar:</b> {$views} ta\n\n" .
-                   "🤖 <b>Bot:</b> @" . env('TELEGRAM_BOT_USERNAME');
+                   "🤖 <b>Bot:</b> @" . config('telegram.bot_username');
 
         $keyboard = [
             'inline_keyboard' => [
@@ -389,7 +414,7 @@ class TelegramController extends Controller
         $sent = false;
 
         if ($movie && $movie->message_id && $movie->channel_id) {
-            $response = Http::post("https://api.telegram.org/bot{$token}/copyMessage", [
+            $response = $this->telegram->call('copyMessage', [
                 'chat_id' => $chatId,
                 'from_chat_id' => $movie->channel_id,
                 'message_id' => $movie->message_id,
@@ -401,7 +426,7 @@ class TelegramController extends Controller
         }
 
         if (!$sent) {
-            Http::post("https://api.telegram.org/bot{$token}/sendVideo", [
+            $this->telegram->call('sendVideo', [
                 'chat_id' => $chatId,
                 'video' => $episode->file_id,
                 'caption' => $caption,
@@ -411,15 +436,14 @@ class TelegramController extends Controller
         }
     }
 
-    private function checkSubscription($token, $chatId)
+    private function checkSubscription($chatId)
     {
         $channels = [
-
             ['id' => '-1003774629679', 'link' => 'https://t.me/kin0meda'],
         ];
 
         foreach ($channels as $channel) {
-            $response = Http::post("https://api.telegram.org/bot{$token}/getChatMember", [
+            $response = $this->telegram->call('getChatMember', [
                 'chat_id' => $channel['id'],
                 'user_id' => $chatId,
             ]);
@@ -435,7 +459,7 @@ class TelegramController extends Controller
         return true;
     }
 
-    private function sendSubscriptionMessage($token, $chatId)
+    private function sendSubscriptionMessage($chatId)
     {
         $buttons = [
             [
@@ -446,7 +470,7 @@ class TelegramController extends Controller
             ]
         ];
 
-        Http::post("https://api.telegram.org/bot{$token}/sendMessage", [
+        $this->telegram->call('sendMessage', [
             'chat_id' => $chatId,
             'text' => "Botdan foydalanish uchun kanalimizga a'zo bo'ling:",
             'reply_markup' => json_encode(['inline_keyboard' => $buttons]),

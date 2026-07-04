@@ -39,11 +39,11 @@ class SerialSeeder extends Seeder
         ];
 
         foreach ($episodes as $data) {
-            SerialEpisode::updateOrCreate(
+            SerialEpisode::firstOrCreate(
                 ['serial_id' => $serial->id, 'episode_number' => $data['ep']],
                 ['file_id' => $data['file_id']]
             );
-             Movie::updateOrCreate(
+             Movie::firstOrCreate(
                 ['code' => $data['code']],
                 [
                     'name' => "{$serialName} {$data['ep']}-qism",
@@ -75,11 +75,11 @@ class SerialSeeder extends Seeder
         ];
 
         foreach ($episodes as $data) {
-            SerialEpisode::updateOrCreate(
+            SerialEpisode::firstOrCreate(
                 ['serial_id' => $serial->id, 'episode_number' => $data['ep']],
                 ['file_id' => $data['file_id']]
             );
-            Movie::updateOrCreate(
+            Movie::firstOrCreate(
                 ['code' => $data['code']],
                 [
                     'name' => "{$serialName} {$data['ep']}-qism",
@@ -179,11 +179,11 @@ class SerialSeeder extends Seeder
         ];
 
         foreach ($episodes as $data) {
-            SerialEpisode::updateOrCreate(
+            SerialEpisode::firstOrCreate(
                 ['serial_id' => $serial->id, 'episode_number' => $data['ep']],
                 ['file_id' => $data['file_id']]
             );
-            Movie::updateOrCreate(
+            Movie::firstOrCreate(
                 ['code' => $data['code']],
                 [
                     'name' => "{$serialName} {$data['ep']}-qism",
@@ -235,11 +235,11 @@ class SerialSeeder extends Seeder
         ];
 
         foreach ($episodes as $data) {
-            SerialEpisode::updateOrCreate(
+            SerialEpisode::firstOrCreate(
                 ['serial_id' => $serial->id, 'episode_number' => $data['ep']],
                 ['file_id' => $data['file_id']]
             );
-            Movie::updateOrCreate(
+            Movie::firstOrCreate(
                 ['code' => $data['code']],
                 [
                     'name' => "{$serialName} {$data['ep']}-qism",
@@ -311,11 +311,11 @@ class SerialSeeder extends Seeder
         ];
 
         foreach ($episodes as $data) {
-            SerialEpisode::updateOrCreate(
+            SerialEpisode::firstOrCreate(
                 ['serial_id' => $serial->id, 'episode_number' => $data['ep']],
                 ['file_id' => $data['file_id']]
             );
-            Movie::updateOrCreate(
+            Movie::firstOrCreate(
                 ['code' => $data['code']],
                 [
                     'name' => "{$serialName} {$data['ep']}-qism",
@@ -347,11 +347,11 @@ class SerialSeeder extends Seeder
         ];
 
         foreach ($episodes as $data) {
-            SerialEpisode::updateOrCreate(
+            SerialEpisode::firstOrCreate(
                 ['serial_id' => $serial->id, 'episode_number' => $data['ep']],
                 ['file_id' => $data['file_id']]
             );
-            Movie::updateOrCreate(
+            Movie::firstOrCreate(
                 ['code' => $data['code']],
                 [
                     'name' => "{$serialName} {$data['ep']}-qism",

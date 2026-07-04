@@ -90,7 +90,7 @@ class MovieRusSeeder15 extends Seeder
         ];
 
         foreach ($movies as $movieData) {
-            Movie::updateOrCreate(
+            Movie::firstOrCreate(
                 ['code' => $movieData['code']],
                 [
                     'name' => $movieData['name'],

@@ -37,6 +37,7 @@ class DatabaseSeeder extends Seeder
             WednesdayS2Seeder::class,
             WednesdayS1Seeder::class,
             MovieSeeder16::class,
+            ZolotayaLojhkaSeeder::class,
         ]);
     }
 }

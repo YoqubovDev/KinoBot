@@ -42,7 +42,7 @@ class ZolotayaLojhkaSeeder extends Seeder
         foreach ($episodes as $ep) {
             $movieName = "{$serialName} {$ep['ep']}-qism";
 
-            Movie::updateOrCreate(
+            Movie::firstOrCreate(
                 ['code' => $ep['code']],
                 [
                     'name' => $movieName,
@@ -52,7 +52,7 @@ class ZolotayaLojhkaSeeder extends Seeder
                 ]
             );
 
-            SerialEpisode::updateOrCreate(
+            SerialEpisode::firstOrCreate(
                 [
                     'serial_id' => $serial->id,
                     'episode_number' => $ep['ep'],

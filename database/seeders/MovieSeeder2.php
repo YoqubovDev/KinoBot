@@ -4,7 +4,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\Movie;
 use Illuminate\Support\Carbon;
 
 class MovieSeeder2 extends Seeder
@@ -429,7 +429,7 @@ class MovieSeeder2 extends Seeder
         foreach ($logData as $movie) {
             $movies[] = [
                 'code' => $movie['code'],
-                'channel_id' => env('TELEGRAM_CHANNEL_USERNAME', '@kinomed1aa'),
+                'channel_id' => config('telegram.channel_username', '@kinomed1aa'),
                 'message_id' => $movie['message_id'],
                 'file_id' => $movie['file_id'],
                 'views' => 0,
@@ -439,7 +439,12 @@ class MovieSeeder2 extends Seeder
         }
 
         // Database ga qo'shish
-        DB::table('movies')->insert($movies);
+        foreach ($movies as $movie) {
+            Movie::firstOrCreate(
+                ['code' => $movie['code']],
+                collect($movie)->except(['code', 'created_at', 'updated_at'])->toArray()
+            );
+        }
 
         $this->command->info(count($movies) . ' ta kino seed qilindi!');
         

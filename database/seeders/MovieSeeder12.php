@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\Movie;
 use Illuminate\Support\Carbon;
 
 class MovieSeeder12 extends Seeder
@@ -63,7 +63,12 @@ class MovieSeeder12 extends Seeder
             ],
         ];
 
-        DB::table('movies')->insert($movies);
+        foreach ($movies as $movie) {
+            Movie::firstOrCreate(
+                ['code' => $movie['code']],
+                collect($movie)->except(['code', 'created_at', 'updated_at'])->toArray()
+            );
+        }
 
         $this->command->info(count($movies) . ' ta yangi kino seed qilindi!');
         $this->command->info(str_repeat('-', 50));

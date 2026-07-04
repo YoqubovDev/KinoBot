@@ -4,7 +4,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\Movie;
 use Illuminate\Support\Carbon;
 
 class MovieSeeder6 extends Seeder
@@ -41,7 +41,7 @@ class MovieSeeder6 extends Seeder
 
             $movies[] = [
                 'code' => (string) $currentCode,
-                'channel_id' => env('TELEGRAM_CHANNEL_USERNAME', '@kinomed1aa'),
+                'channel_id' => config('telegram.channel_username', '@kinomed1aa'),
                 'message_id' => $entry['message_id'],
                 'file_id' => $entry['file_id'],
                 'views' => 0,
@@ -52,7 +52,12 @@ class MovieSeeder6 extends Seeder
             $currentCode++;
         }
 
-        DB::table('movies')->insert($movies);
+        foreach ($movies as $movie) {
+            Movie::firstOrCreate(
+                ['code' => $movie['code']],
+                collect($movie)->except(['code', 'created_at', 'updated_at'])->toArray()
+            );
+        }
 
         $this->command->info(count($movies) . ' ta kino seed qilindi!');
         $this->command->info('Kodlar oralig\'i: 156 - 158');
